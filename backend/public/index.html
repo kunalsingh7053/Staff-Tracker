@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Tracker | K.K. GROUP - 3-Tier Enterprise Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/public/style.css">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header>
+    <div class="brand">
+      <span class="brand-badge">K.K. GROUP</span>
+      <span>Staff Tracker</span>
+    </div>
+
+    <div id="auth-header-container" class="user-badge" style="display: none;">
+      <div>
+        <span id="user-display-name" style="font-weight: 600;"></span>
+        <span id="user-role-badge" class="role-pill"></span>
+      </div>
+      <button id="btn-logout" class="btn btn-outline btn-sm">Sign Out</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- LOGIN SCREEN -->
+    <section id="view-login" class="card" style="max-width: 580px; margin: 3rem auto;">
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <h2 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem;">Enterprise Sign In</h2>
+        <p style="color: var(--text-muted); font-size: 0.875rem;">
+          3-Tier Hierarchy: Admin &bull; Cluster Manager &bull; Field Staff
+        </p>
+      </div>
+
+      <!-- Quick Test Login Selector -->
+      <div style="background-color: #0f172a; padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+        <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 0.75rem;">
+          ⚡ Quick Demo Account Switcher
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="quickFill('admin@kkgroup.com', 'Admin@123')">
+            👑 1. Company Administrator (admin@kkgroup.com)
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="quickFill('delhi.mgr@kkgroup.com', 'Manager@123')">
+            🏢 2. Delhi Cluster Manager (delhi.mgr@kkgroup.com)
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="quickFill('mumbai.mgr@kkgroup.com', 'Manager@123')">
+            🏢 3. Mumbai Cluster Manager (mumbai.mgr@kkgroup.com)
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="quickFill('delhi.staff@kkgroup.com', 'Staff@123')">
+            🛵 4. Field Staff - Delhi (delhi.staff@kkgroup.com)
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="quickFill('mumbai.staff@kkgroup.com', 'Staff@123')">
+            🛵 5. Field Staff - Mumbai (mumbai.staff@kkgroup.com)
+          </button>
+        </div>
+      </div>
+
+      <form id="form-login">
+        <div class="form-group">
+          <label class="form-label">Employee ID or Email</label>
+          <input type="text" id="login-id" class="form-control" required placeholder="e.g. admin@kkgroup.com or KK-EMP-201">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="login-password" class="form-control" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+          Authenticate Session
+        </button>
+      </form>
+
+      <div style="margin-top: 1.5rem; text-align: center;">
+        <button type="button" id="btn-seed-db" class="btn btn-outline btn-sm" style="color: var(--amber); border-color: rgba(245, 158, 11, 0.4);">
+          ✨ Initialize Database with Test Clusters & Staff
+        </button>
+      </div>
+    </section>
+
+    <!-- ADMIN PANEL -->
+    <section id="view-admin" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+          <h1 style="font-size: 1.5rem; font-weight: 700;">Company Administrator Panel</h1>
+          <p style="color: var(--text-muted); font-size: 0.875rem;">Full organizational visibility across all clusters, field personnel, and payroll.</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-outline btn-sm" onclick="exportData('excel')">📥 Export Excel</button>
+          <button class="btn btn-outline btn-sm" onclick="exportData('pdf')">📄 Export PDF</button>
+        </div>
+      </div>
+
+      <!-- Admin Metrics -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Total Clusters</div>
+          <div class="metric-value" id="admin-metric-clusters">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Total Employees</div>
+          <div class="metric-value" id="admin-metric-employees">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Present Today</div>
+          <div class="metric-value" id="admin-metric-present" style="color: var(--emerald);">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Absent Today</div>
+          <div class="metric-value" id="admin-metric-absent" style="color: var(--rose);">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Travelling Now</div>
+          <div class="metric-value" id="admin-metric-travelling" style="color: var(--primary);">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Total Km Today</div>
+          <div class="metric-value" id="admin-metric-km">0.0 km</div>
+        </div>
+      </div>
+
+      <!-- Admin Navigation Tabs -->
+      <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchAdminTab('clusters')">Clusters & Managers</button>
+        <button class="tab-btn" onclick="switchAdminTab('employees')">Employee Directory</button>
+        <button class="tab-btn" onclick="switchAdminTab('attendance')">Live Attendance</button>
+        <button class="tab-btn" onclick="switchAdminTab('fleet')">Live GPS Fleet</button>
+        <button class="tab-btn" onclick="switchAdminTab('salary')">Salary & Payroll</button>
+      </div>
+
+      <!-- Tab: Clusters -->
+      <div id="admin-tab-clusters" class="admin-tab-content">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Company Clusters</div>
+            <button class="btn btn-primary btn-sm" onclick="openModal('modal-create-cluster')">+ Create New Cluster</button>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Cluster Code</th>
+                  <th>Cluster Name</th>
+                  <th>Location</th>
+                  <th>Assigned Managers</th>
+                  <th>Active Staff</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-clusters-tbody">
+                <tr><td colspan="6" style="text-align: center;">Loading clusters...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Employees -->
+      <div id="admin-tab-employees" class="admin-tab-content" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Employees Directory</div>
+            <div style="display: flex; gap: 0.75rem;">
+              <select id="admin-employee-cluster-filter" class="form-control" style="width: 200px;" onchange="loadAdminEmployees()">
+                <option value="">All Clusters</option>
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="openModal('modal-create-employee')">+ Add Employee</button>
+              <button class="btn btn-outline btn-sm" onclick="openModal('modal-transfer-employee')">🔄 Transfer Staff</button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Emp ID</th>
+                  <th>Full Name</th>
+                  <th>Role</th>
+                  <th>Cluster</th>
+                  <th>Department</th>
+                  <th>Base Salary</th>
+                  <th>Per Km Rate</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="admin-employees-tbody">
+                <tr><td colspan="8" style="text-align: center;">Loading employees...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Attendance -->
+      <div id="admin-tab-attendance" class="admin-tab-content" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Live Company Attendance Monitor</div>
+            <input type="date" id="admin-attendance-date" class="form-control" style="width: 170px;" onchange="loadAdminAttendance()">
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Emp ID</th>
+                  <th>Name</th>
+                  <th>Cluster</th>
+                  <th>Status</th>
+                  <th>Check In Time</th>
+                  <th>Check Out Time</th>
+                  <th>Working Duration</th>
+                  <th>Late Arrival</th>
+                </tr>
+              </thead>
+              <tbody id="admin-attendance-tbody">
+                <tr><td colspan="8" style="text-align: center;">Loading attendance...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Live Fleet GPS -->
+      <div id="admin-tab-fleet" class="admin-tab-content" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Real-Time Field Fleet Tracker</div>
+            <button class="btn btn-outline btn-sm" onclick="loadAdminFleet()">🔄 Refresh Fleet</button>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Officer</th>
+                  <th>Cluster</th>
+                  <th>Status</th>
+                  <th>Latest GPS Coordinates</th>
+                  <th>Speed</th>
+                  <th>Battery</th>
+                  <th>Today Travelled</th>
+                </tr>
+              </thead>
+              <tbody id="admin-fleet-tbody">
+                <tr><td colspan="7" style="text-align: center;">Loading live fleet...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Salary -->
+      <div id="admin-tab-salary" class="admin-tab-content" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Salary & Payroll Module</div>
+            <div style="display: flex; gap: 0.5rem;">
+              <input type="month" id="admin-salary-month" class="form-control" style="width: 160px;">
+              <button class="btn btn-emerald btn-sm" onclick="generateSalary()">⚡ Run Payroll Calculation</button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Emp ID</th>
+                  <th>Month</th>
+                  <th>Base Pay</th>
+                  <th>Days Worked</th>
+                  <th>Field Distance</th>
+                  <th>Travel Allowance</th>
+                  <th>Gross Earnings</th>
+                  <th>Net Payable</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="admin-salary-tbody">
+                <tr><td colspan="9" style="text-align: center;">Select a month and click calculate or view records...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLUSTER MANAGER PANEL -->
+    <section id="view-manager" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+          <h1 style="font-size: 1.5rem; font-weight: 700;">Cluster Manager Panel</h1>
+          <p id="manager-scope-notice" style="color: var(--primary); font-size: 0.875rem; font-weight: 600;">
+            Scoped strictly to your assigned cluster(s).
+          </p>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-outline btn-sm" onclick="exportData('excel')">📥 Export Cluster Excel</button>
+        </div>
+      </div>
+
+      <!-- Cluster Manager Metrics -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Cluster Staff</div>
+          <div class="metric-value" id="mgr-metric-employees">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Present Today</div>
+          <div class="metric-value" id="mgr-metric-present" style="color: var(--emerald);">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Absent Today</div>
+          <div class="metric-value" id="mgr-metric-absent" style="color: var(--rose);">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Travelling Now</div>
+          <div class="metric-value" id="mgr-metric-travelling" style="color: var(--primary);">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Cluster Km Today</div>
+          <div class="metric-value" id="mgr-metric-km">0.0 km</div>
+        </div>
+      </div>
+
+      <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchMgrTab('staff')">My Cluster Staff</button>
+        <button class="tab-btn" onclick="switchMgrTab('attendance')">Cluster Attendance</button>
+        <button class="tab-btn" onclick="switchMgrTab('fleet')">Live Fleet Tracking</button>
+        <button class="tab-btn" onclick="switchMgrTab('claims')">Travel Claims</button>
+      </div>
+
+      <!-- Tab: Manager Staff -->
+      <div id="mgr-tab-staff" class="mgr-tab-content">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Employees in Your Assigned Cluster</div>
+            <button class="btn btn-primary btn-sm" onclick="openModal('modal-create-employee')">+ Add Cluster Employee</button>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Emp ID</th>
+                  <th>Name</th>
+                  <th>Cluster</th>
+                  <th>Designation</th>
+                  <th>Mobile</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="mgr-employees-tbody">
+                <tr><td colspan="6" style="text-align: center;">Loading your cluster employees...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Manager Attendance -->
+      <div id="mgr-tab-attendance" class="mgr-tab-content" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Daily Attendance Logs</div>
+            <input type="date" id="mgr-attendance-date" class="form-control" style="width: 170px;" onchange="loadMgrAttendance()">
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Emp ID</th>
+                  <th>Name</th>
+                  <th>Status</th>
+                  <th>Check In</th>
+                  <th>Check Out</th>
+                  <th>Working Hours</th>
+                  <th>Late Arrival</th>
+                </tr>
+              </thead>
+              <tbody id="mgr-attendance-tbody">
+                <tr><td colspan="7" style="text-align: center;">Loading attendance...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Manager Fleet -->
+      <div id="mgr-tab-fleet" class="mgr-tab-content" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Live Field Locations (Cluster Personnel Only)</div>
+            <button class="btn btn-outline btn-sm" onclick="loadMgrFleet()">🔄 Refresh</button>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Field Officer</th>
+                  <th>Travel Status</th>
+                  <th>Current Coordinates</th>
+                  <th>Speed</th>
+                  <th>Battery</th>
+                  <th>Today Distance</th>
+                </tr>
+              </thead>
+              <tbody id="mgr-fleet-tbody">
+                <tr><td colspan="6" style="text-align: center;">Loading fleet...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Manager Claims -->
+      <div id="mgr-tab-claims" class="mgr-tab-content" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Field Travel Expense Claims</div>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Emp ID</th>
+                  <th>Date</th>
+                  <th>Claimed Distance</th>
+                  <th>Amount</th>
+                  <th>Remarks</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="mgr-claims-tbody">
+                <tr><td colspan="7" style="text-align: center;">Loading claims...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STAFF PANEL -->
+    <section id="view-staff" style="display: none;">
+      <div style="margin-bottom: 1.5rem;">
+        <h1 style="font-size: 1.5rem; font-weight: 700;">Employee Field Dashboard</h1>
+        <p id="staff-header-sub" style="color: var(--text-muted); font-size: 0.875rem;">Your individual duty and travel terminal.</p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <!-- Card 1: Shift Attendance -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Daily Shift Attendance</div>
+            <span id="staff-att-status-badge" class="metric-badge" style="background: rgba(100, 116, 139, 0.2); color: #94a3b8;">NOT CHECKED IN</span>
+          </div>
+          <div style="margin: 1.25rem 0;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+              <span style="color: var(--text-muted); font-size: 0.875rem;">Check In Time:</span>
+              <span id="staff-checkin-time-val" style="font-weight: 600;">--:--</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+              <span style="color: var(--text-muted); font-size: 0.875rem;">Check Out Time:</span>
+              <span id="staff-checkout-time-val" style="font-weight: 600;">--:--</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted); font-size: 0.875rem;">Working Duration:</span>
+              <span id="staff-working-duration-val" style="font-weight: 600;">0 hrs</span>
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.75rem;">
+            <button id="btn-staff-checkin" class="btn btn-emerald" style="flex: 1;" onclick="staffCheckIn()">
+              ✅ Check In
+            </button>
+            <button id="btn-staff-checkout" class="btn btn-rose" style="flex: 1;" disabled onclick="staffCheckOut()">
+              🚪 Check Out
+            </button>
+          </div>
+        </div>
+
+        <!-- Card 2: GPS Travel Tracker -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Field Travel Distance Tracker</div>
+            <span id="staff-travel-status-badge" class="metric-badge" style="background: rgba(100, 116, 139, 0.2); color: #94a3b8;">IDLE</span>
+          </div>
+          <div style="text-align: center; margin: 1.25rem 0;">
+            <div style="font-size: 2.25rem; font-weight: 800; color: var(--emerald);" id="staff-live-distance">0.00 km</div>
+            <div style="font-size: 0.8125rem; color: var(--text-muted);">Verified Cumulative Distance Travelled Today</div>
+          </div>
+          <div style="display: flex; gap: 0.75rem;">
+            <button id="btn-staff-start-travel" class="btn btn-primary" style="flex: 1;" onclick="staffStartTravel()">
+              🚀 Start Field Travel
+            </button>
+            <button id="btn-staff-stop-travel" class="btn btn-rose" style="flex: 1;" disabled onclick="staffStopTravel()">
+              🛑 Stop Travel
+            </button>
+          </div>
+          <div style="margin-top: 0.75rem; text-align: center;">
+            <button id="btn-staff-send-coords" class="btn btn-outline btn-sm" disabled onclick="staffSimulateWaypoint()">
+              📍 Transmit Next GPS Waypoint (+2.3 km)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Staff History and Slips -->
+      <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchStaffTab('history')">Attendance History</button>
+        <button class="tab-btn" onclick="switchStaffTab('slips')">Salary Slips</button>
+        <button class="tab-btn" onclick="switchStaffTab('claim')">Submit Expense Claim</button>
+      </div>
+
+      <div id="staff-tab-history" class="staff-tab-content">
+        <div class="card">
+          <div class="card-title" style="margin-bottom: 1rem;">Past Attendance Logs</div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Check In</th>
+                  <th>Check Out</th>
+                  <th>Working Duration</th>
+                </tr>
+              </thead>
+              <tbody id="staff-history-tbody">
+                <tr><td colspan="5" style="text-align: center;">Loading attendance history...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="staff-tab-slips" class="staff-tab-content" style="display: none;">
+        <div class="card">
+          <div class="card-title" style="margin-bottom: 1rem;">My Monthly Salary Slips</div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Base Pay</th>
+                  <th>Present Days</th>
+                  <th>Field Distance</th>
+                  <th>Travel Allowance</th>
+                  <th>Net Earnings</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="staff-slips-tbody">
+                <tr><td colspan="7" style="text-align: center;">Loading salary records...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="staff-tab-claim" class="staff-tab-content" style="display: none;">
+        <div class="card" style="max-width: 600px;">
+          <div class="card-title" style="margin-bottom: 1rem;">Submit Travel Reimbursement Claim</div>
+          <form id="form-staff-claim">
+            <div class="form-group">
+              <label class="form-label">Date of Travel</label>
+              <input type="date" id="claim-date" class="form-control" required>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Distance Travelled (KM)</label>
+                <input type="number" step="0.1" id="claim-distance" class="form-control" required placeholder="e.g. 45.2">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Claimed Amount (₹)</label>
+                <input type="number" step="0.5" id="claim-amount" class="form-control" required placeholder="e.g. 293.8">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Toll & Parking (Optional ₹)</label>
+              <input type="number" id="claim-toll" class="form-control" placeholder="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Justification / Remarks</label>
+              <textarea id="claim-remarks" class="form-control" rows="2" required placeholder="e.g. Client site inspections in Sector 62 and Noida Phase 2"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit Claim</button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODALS -->
+
+  <!-- Modal: Create Cluster -->
+  <div id="modal-create-cluster" class="modal-overlay">
+    <div class="modal">
+      <div class="card-header">
+        <h3 class="card-title">Create New Operational Cluster</h3>
+        <button class="btn btn-outline btn-sm" onclick="closeModal('modal-create-cluster')">✕</button>
+      </div>
+      <form id="form-create-cluster">
+        <div class="form-group">
+          <label class="form-label">Cluster Name</label>
+          <input type="text" id="cluster-name" class="form-control" required placeholder="e.g. Pune Tech Region">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Unique Cluster Code</label>
+          <input type="text" id="cluster-code" class="form-control" required placeholder="e.g. CL-PUN-01">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">City</label>
+            <input type="text" id="cluster-city" class="form-control" placeholder="e.g. Pune">
+          </div>
+          <div class="form-group">
+            <label class="form-label">State</label>
+            <input type="text" id="cluster-state" class="form-control" placeholder="e.g. Maharashtra">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea id="cluster-desc" class="form-control" rows="2" placeholder="Field operations coverage area"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Create Cluster</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Assign Managers to Cluster -->
+  <div id="modal-assign-manager" class="modal-overlay">
+    <div class="modal">
+      <div class="card-header">
+        <h3 class="card-title">Assign Managers to Cluster</h3>
+        <button class="btn btn-outline btn-sm" onclick="closeModal('modal-assign-manager')">✕</button>
+      </div>
+      <form id="form-assign-manager">
+        <input type="hidden" id="assign-cluster-id">
+        <p id="assign-cluster-name-display" style="font-weight: 600; color: var(--primary); margin-bottom: 1rem;"></p>
+        <div class="form-group">
+          <label class="form-label">Select Cluster Manager</label>
+          <select id="assign-manager-select" class="form-control" required>
+            <option value="">Select a manager...</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Assign Manager</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Transfer Employee -->
+  <div id="modal-transfer-employee" class="modal-overlay">
+    <div class="modal">
+      <div class="card-header">
+        <h3 class="card-title">Transfer Employee Between Clusters</h3>
+        <button class="btn btn-outline btn-sm" onclick="closeModal('modal-transfer-employee')">✕</button>
+      </div>
+      <form id="form-transfer-employee">
+        <div class="form-group">
+          <label class="form-label">Employee ID</label>
+          <input type="text" id="transfer-emp-id" class="form-control" required placeholder="e.g. KK-EMP-201">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Cluster</label>
+          <select id="transfer-target-cluster" class="form-control" required>
+            <option value="">Select destination cluster...</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Execute Transfer</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Create Employee -->
+  <div id="modal-create-employee" class="modal-overlay">
+    <div class="modal">
+      <div class="card-header">
+        <h3 class="card-title">Add New Employee</h3>
+        <button class="btn btn-outline btn-sm" onclick="closeModal('modal-create-employee')">✕</button>
+      </div>
+      <form id="form-create-employee">
+        <div class="form-group">
+          <label class="form-label">Full Legal Name</label>
+          <input type="text" id="emp-name" class="form-control" required placeholder="e.g. Rajesh Kumar">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" id="emp-email" class="form-control" required placeholder="rajesh@kkgroup.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mobile Number</label>
+            <input type="text" id="emp-mobile" class="form-control" required placeholder="+919876543210">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Initial Password</label>
+            <input type="password" id="emp-password" class="form-control" required placeholder="••••••••">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Role</label>
+            <select id="emp-role" class="form-control" required>
+              <option value="STAFF">Staff (Field Employee)</option>
+              <option value="CLUSTER_MANAGER">Cluster Manager</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" id="emp-cluster-group">
+          <label class="form-label">Assigned Cluster</label>
+          <select id="emp-cluster-select" class="form-control">
+            <option value="">Select cluster...</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Department</label>
+            <input type="text" id="emp-dept" class="form-control" required placeholder="Logistics">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Designation</label>
+            <input type="text" id="emp-desig" class="form-control" required placeholder="Field Officer">
+          </div>
+        </div>
+        <div class="form-row" id="emp-salary-row">
+          <div class="form-group">
+            <label class="form-label">Base Monthly Salary (₹)</label>
+            <input type="number" id="emp-salary" class="form-control" value="28000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Per KM Rate (₹)</label>
+            <input type="number" step="0.5" id="emp-km-rate" class="form-control" value="6.5">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Create Employee</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="/public/app.js"></script>
+</body>
+</html>

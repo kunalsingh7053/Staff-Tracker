@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Staff Tracker</string>
+    <string name="tracking_notification_channel_id">staff_tracker_location_channel</string>
+    <string name="tracking_notification_channel_name">Field Travel Tracking</string>
+    <string name="tracking_notification_title">Field Travel Tracking Active</string>
+    <string name="tracking_notification_desc">Staff Tracker is recording your field travel distance in the background.</string>
+    <string name="stop_tracking_action">Stop Travel</string>
+    <string name="location_permission_rationale">Staff Tracker requires background location access during your work hours to accurately record your field travel distances and travel allowance reimbursement.</string>
+</resources>
